@@ -3,8 +3,13 @@ name: Release Build
 on:
   push:
     tags:
-      - "v*" # 仅当推送 v 开头的 tag 时触发（例如 v1.0.0）
-  workflow_dispatch:  # 添加此项以支持手动触发
+      - "v*" 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., 1.0.0)"
+        required: true
+        default: "0.0.1-dev"
 
 jobs:
   build-and-release:
@@ -24,12 +29,17 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+      - name: Create ZIP archive
+        run: zip -r build-${{ github.run_id }}.zip dist/*
+
+      - name: Create Release
+        # 使用更稳定的 release-action 替代
+        uses: ncipollo/release-action@v1
         with:
-          files: dist/** # 上传整个构建目录
-          tag_name: ${{ github.ref_name }}  # 使用触发的标签名称
-          generate_release_notes: true  # 自动生成发布说明
-          draft: false  # 直接发布而非草稿
+          tag: v${{ github.event.inputs.version || github.ref_name }}
+          name: Release v${{ github.event.inputs.version || github.ref_name }}
+          artifacts: "build-*.zip" # 上传压缩包
+          generateReleaseNotes: true
+          draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
