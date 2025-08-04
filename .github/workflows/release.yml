@@ -1,0 +1,35 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - "v*" # 仅当推送 v 开头的 tag 时触发（例如 v1.0.0）
+  workflow_dispatch:  # 添加此项以支持手动触发
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/** # 上传整个构建目录
+          tag_name: ${{ github.ref_name }}  # 使用触发的标签名称
+          generate_release_notes: true  # 自动生成发布说明
+          draft: false  # 直接发布而非草稿
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
