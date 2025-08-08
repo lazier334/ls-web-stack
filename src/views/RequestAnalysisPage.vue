@@ -185,11 +185,14 @@ export default {
                 if (request.value.method !== 'GET' && request.value.body) {
                     try {
                         // 尝试解析为 JSON（如果用户输入的是 JSON）
-                        JSON.parse(request.value.body);
-                        options.body = request.value.body;
+                        let body = eval(`(${request.value.body})`);
+                        if (typeof body != 'object' || body == null) throw new Error('数据不是object类型或者为null');
+                        options.body = JSON.stringify(body);
+                        options.headers['Content-Type'] = 'application/json';
                     } catch (e) {
                         // 否则直接作为文本发送
                         options.body = request.value.body;
+                        console.log('计算参数失败', e)
                     }
                 }
 
